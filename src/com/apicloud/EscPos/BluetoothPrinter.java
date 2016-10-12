@@ -45,8 +45,7 @@ public class BluetoothPrinter implements IPrinter {
 	public void printQRCode(String code,int width,int height) throws Exception {
 		// ªÒ»°ESC√¸¡Ó
 		CommandBuilder cmdBuilder = new CommandBuilder();
-		QRCodeUtil qrutil = new QRCodeUtil();
-		Bitmap bitmap = qrutil.createQRImage(code, width, height, null);
+		Bitmap bitmap = QRCodeUtil.createQRImage(code, width, height, null);
 		byte[] data1 = cmdBuilder.getImageBytes(bitmap);
 		bitmap.recycle();
 
