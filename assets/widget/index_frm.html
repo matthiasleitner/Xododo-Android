@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>WinA</title>
+    <link rel="stylesheet" type="text/css" href="css/api.css" />
+    <link rel="stylesheet" type="text/css" href="css/box.css" />
+    <script type="text/javascript" src="script/public.js"></script>
+    <style>
+    	p{
+    		color:#999;
+    		padding:5px;
+    	}
+    	div[id='divScannerResult']
+    	{
+    		color:red;
+    		font-size:15px;
+    	}
+    </style>
+	<script type="text/javascript">
+	    var myModule = null;
+		var uzmoduledemo = null;
+		var scrollPicture = null;
+		apiready = function(){
+			myModule = api.require('posPrinter');
+	    }
+	    
+		function printTest(){
+			var myModule = api.require('posPrinter');
+            var content;
+            //content = "<CA>小恒水饺长阳华冠--菜品营业销售汇总报表</CA><BR>************************************************<BR>统计日期：2016-10-11<BR>----------------------------------------------<BR>订单金额                  688.00<BR>送餐费                    0.00<BR>最低消费差                0.00<BR>赠送金额                  0.00<BR>优惠金额                  0.00<BR>抹零金额                  0.00<BR>会员折扣                  0.00<BR>应收金额                  688.00<BR>实收金额                  688.00<BR>销售单数                  13<BR>人数                      28<BR>退菜金额                  0.00<BR>退菜率                    0.00<BR>挂单金额                  24      1286.00<BR>取消金额                  0       0.00<BR>退单金额                  0       0.00<BR>----------------------------------------------<BR>堂食                      688.00<BR>美团外卖                  0.00<BR>美团团购                  0.00<BR>饿了么                    0.00<BR>百度外卖                  0.00<BR>大众点评                  0.00<BR>----------------------------------------------<BR>现金                      688.00<BR>信用卡                    0.00<BR>银行卡                    0.00<BR>微信支付                  0.00<BR>微信卡包                  0.00<BR>百度钱包                  0.00<BR>支付宝                    36.00<BR>贵宾卡                    0.00<BR>礼品卡                    0.00<BR>----------------------------------------------<BR>3元代金券                 0       0.00<BR>4元代金券                 0       0.00<BR>5元代金券                 0       0.00<BR>8元代金券                 0       0.00<BR>10元代金券                0       0.00<BR>----------------------------------------------<BR>4元套餐优惠               0       0.00<BR>7折                       0       0.00<BR>8折                       0       0.00<BR>9折                       0       0.00<BR>----------------------------------------------<BR><B>编号 菜品名称                          </B><BR>1006 茴香猪肉(大)         2          2.15% <BR>                          56.00      7.73%<BR>1014 韭菜猪肉(大)         2          2.15% <BR>                          56.00      7.73%<BR>1016 牛肉圆葱(大)         12         12.9% <BR>                          360.00     49.72%<BR>1018 蘑菇猪肉(大)         7          7.53% <BR>                          252.00     34.81%<BR>小计 01-饺子单售          23         24.73%<BR>                          724        99.99%<BR>----------------------------------------------<BR>9003 3元代金券            1          1.08% <BR>                          0.00       0%   <BR>9004 4元代金券            1          1.08% <BR>                          0.00       0%   <BR>************************************************<BR>----------------------------------------------<BR>打印时间：2016-10-11 16:07:25<BR>操 作 员：范红军<BR>************************************************<BR>---------------------cut--------------------<BR>                             <BR>                             <BR><CA>小恒水饺--菜品时段销售日汇总报表</CA><BR><B>时间段     　  编号  菜品名称            数量</B><BR><CUT><CA>小恒水饺--菜品时段销售日汇总报表</CA><BR><B>时间段     　  编号  菜品名称            数量</B><BR><CUT>";
+content = "hello";
+//98:D3:31:20:23:4A 00:18:E4:0C:6B:1E
+            var param = { "taskList": [{ "printerAddr": "192.168.3.243", "content": content, copyNum: 1 }] };
+			myModule.printOnSpecifiedPrinters(param);
+		}
+		
+		function printQRCode(){
+			var myModule = api.require('posPrinter');
+            var param = {printerAddr: '192.168.3.243' , code:'http://www.163.com' ,width:360,height:360};
+			myModule.printQRCode(param);
+		}
+		
+		function findBluetooth()
+		{
+		
+			var resultCallback = function(ret, err){
+				var result = "";
+				for(var i = 0 ; i < ret.length ; i ++)
+				{
+					result += (ret[i].name + " " + ret[i].address + " " + ret[i].bondState) + "\r\n";
+				}
+				alert(result);
+			}
+			myModule.getBluetoothPrinters(null,resultCallback);
+		}
+		
+		function startScanner()
+		{
+			var param = {addr : "5C:B6:CC:02:C9:33"};
+			var resultCallback = function(code, err){
+				if(err)
+				{
+					alert(err.error);
+					startScanner();
+				}
+				else
+				{
+					document.getElementById("divScannerResult").innerHTML = code;
+				}
+			}
+			myModule.setScannerCallback(param,resultCallback);
+		}
+		
+		function startActivity(){
+			var param = {appParam:"Hello APICloud!"};
+	        uzmoduledemo.startActivity(param);
+		}
+		
+		function startActivityForResult(){
+			var param = {appParam:"Hello APICloud!"};
+			var resultCallback = function(ret, err){
+				document.getElementById("activity_result").innerHTML = JSON.stringify(ret);
+			}
+	        uzmoduledemo.startActivityForResult(param, resultCallback);
+		}
+		
+		function vibrate(){
+			var mill = document.getElementById("vibrate").value;
+			var param = {milliseconds:mill};
+	        uzmoduledemo.vibrate(param);
+		}
+		
+		function stopVibrate(){
+	        uzmoduledemo.stopVibrate();
+		}
+		
+		function addView(){
+			var param = {x:20,y:20,w:200,h:200};
+	        uzmoduledemo.addView(param);
+		}
+		
+		function removeView(){
+		
+	        uzmoduledemo.removeView();
+		}
+
+		function testopen(){
+			var sw = document.getElementById("sw").value;
+			scrollPicture.open({
+				x:0,
+				y:30,
+				w:sw,
+				h:200,
+				fixedOn:'index_frm', //閸ュ搫鐣鹃崷銊ユ倳娑擄拷'index_frm'閻ㄥ垿rame娑擄拷
+				//fixed:false //鐠虹喖娈㈢純鎴︺�夊姘З
+			}, function(ret, err){
+				alert(JSON.stringify(ret));
+			});
+		}
+		
+		function testclose(){
+			scrollPicture.close();
+		}
+		
+		function toRefrash(){
+			api.refreshHeaderLoading();
+		}
+		
+		function stopRefrash(){
+			api.refreshHeaderLoadDone();
+		}
+		
+		function setRefrashHeader(){
+			api.setCustomRefreshHeaderInfo({
+			    arrowImage: 'widget://image/refresh.png'
+			}, function( ret, err ){
+			    ;
+			});
+			alert('鐠佸墽鐤嗛幋鎰閿涘苯鍟�鏉╂稑鍙嗘稉瀣閸掗攱鏌婇悩鑸碉拷浣烘箙閻娴橀悧鍥ㄦЦ閸氾箑褰夐崯锔肩磼');
+		}
+		
+		var sModule = null;
+		
+		function syncInterface(what){
+			if(!sModule){
+				sModule = api.require('syncModule');
+			}
+			var ret = null;
+			if(0 == what){
+				ret = sModule.int();
+			}else if(1 == what){
+				ret = sModule.float();
+			}else if(2 == what){
+				ret = sModule.boolean();
+			}else if(3 == what){
+				ret = sModule.string();
+			}else if(4 == what){
+				ret = sModule.json();
+			}else if(5 == what){
+				ret = sModule.jsonay();
+			}else{
+				return;
+			}
+			if(typeof ret === 'object'){
+				alert("閼惧嘲褰囩紒鎾寸亯娑撳搫顕挒鈽呯磼\n缂佹挻鐏夐敍锟�" + JSON.stringify(ret));
+			}else{
+				alert("閼惧嘲褰囩紒鎾寸亯娑撳搫鐔�閺堫剚鏆熼幑锟�!\n缂佹挻鐏夐敍锟�" + ret);
+			}
+		}
+	    
+	</script>
+</head>
+<body>
+    <div id="wrap">
+        <div id="main">
+        	<br>
+			<div class='itemtitle'>1閵嗕礁鑴婇崙鍝勵嚠鐠囨繃顢�</div>
+				<div class="clickbtn" tapmode="active" onclick="printTest()" >打印</div>   
+				<div class="clickbtn" tapmode="active" onclick="printQRCode()" >打印二维码</div>
+			<div class='itemtitle'>2閵嗕礁鎯庨崝藡ctivity</div>
+				<div class="clickbtn" tapmode="active" onclick="findBluetooth()" >find bluetooth</div>
+				<div class="clickbtn" tapmode="active" onclick="startScanner()" >开启蓝牙扫描枪</div>
+				<div id="divScannerResult"></div>
+				<div style="font-size:0.8em;">acticity鏉╂柨娲栭崐锟�:</div>
+            	<div id="activity_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br>
+			<div class='itemtitle'>3閵嗕浇鐨熼悽銊啎婢跺洭娓块崝锟�</div>
+				<lable>鐠佸墽鐤嗛棁鍥уЗ閺冨爼妫块敍灞藉礋娴ｅ稄绱板В顐ゎ潡</lable><br>
+				<input type="number" id="vibrate" value="20000" />
+				<div class="clickbtn" tapmode="active" onclick="vibrate()" >瀵拷婵娓块崝锟�</div>
+				<div class="clickbtn" tapmode="active" onclick="stopVibrate()" >閸嬫粍顒涢棁鍥уЗ</div>
+			<div class='itemtitle'>4閵嗕浇鍤滅�规矮绠烾I濡�虫健</div>
+				<div class="clickbtn" tapmode="active" onclick="addView()" >濞ｈ濮為懛顏勭暰娑斿iew閸掓澘缍嬮崜宄巌ndow</div> 
+				<div class="clickbtn" tapmode="active" onclick="removeView()" >娴犲骸缍嬮崜宄巌ndow缁夊娅庨懛顏勭暰娑斿iew</div>     
+			<div class='itemtitle'>5閵嗕胶鐣濋崡鏄恈rollPicture濡�虫健</div>
+				<lable>鏉堟挸鍙哠crollPicture閻ㄥ嫬顔旀惔锟�</lable><br>
+				<input type="number" id="sw" value="300"/>
+				<div class="clickbtn" tapmode="active" onclick="testopen()" >閹垫挸绱慡crollPicture</div>
+				<div class="clickbtn" tapmode="active" onclick="testclose()" >缁夊娅嶴crollPicture</div>
+			<div class='itemtitle'>6閵嗕浇鍤滅�规矮绠熺粻锟介崡鏇犳畱娑撳濯洪崚閿嬫煀濡�虫健</div>
+				<div class="clickbtn" tapmode="active" onclick="toRefrash()" >閻╁瓨甯存潻娑樺弳娑撳濯洪崚閿嬫煀</div>
+				<div class="clickbtn" tapmode="active" onclick="stopRefrash()" >闁拷閸戣桨绗呴幏澶婂煕閺傦拷</div> 
+				<div class="clickbtn" tapmode="active" onclick="setRefrashHeader()" >鐠佸墽鐤嗛懛顏勭暰娑斿绗呴幏澶婂煕閺傜増膩閸э拷</div>   
+			<div class='itemtitle'>7閵嗕礁鎮撳銉﹀复閸欙拷</div>
+				<div class="clickbtn" tapmode="active" onclick="syncInterface(0)" >閸氬本顒為懢宄板絿閺佸瓨鏆�</div>
+				<div class="clickbtn" tapmode="active" onclick="syncInterface(1)" >閸氬本顒為懢宄板絿鐏忓繑鏆�</div>
+				<div class="clickbtn" tapmode="active" onclick="syncInterface(2)" >閸氬本顒為懢宄板絿bool閸婏拷</div>  
+				<div class="clickbtn" tapmode="active" onclick="syncInterface(3)" >閸氬本顒為懢宄板絿鐎涙顑佹稉锟�</div> 
+				<div class="clickbtn" tapmode="active" onclick="syncInterface(4)" >閸氬本顒為懢宄板絿JSON鐎电钖�</div>
+				<div class="clickbtn" tapmode="active" onclick="syncInterface(5)" >閸氬本顒為懢宄板絿JSON閺佹壆绮嶇�电钖�</div>  
+			<br>
+		</div>
+	</div>
+</body>
+</html>

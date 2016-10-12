@@ -1,0 +1,9 @@
+{
+	modules:[
+		{
+		    name:'posPrinter',
+		    class:'com.apicloud.moduleEcsPrint.API_PosPrinter'
+		}
+		
+	]
+}
