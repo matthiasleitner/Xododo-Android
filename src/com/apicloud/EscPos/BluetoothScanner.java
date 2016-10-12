@@ -22,6 +22,10 @@ import android.util.Log;
  */
 public class BluetoothScanner implements IScanner {
 
+	// 蓝牙串口服务 UUID，
+	private static final UUID SerialPortServiceClass_UUID = UUID
+			.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
 	OnReceiveListener m_listener;
 
 	String m_BluetoothAddr;
@@ -29,8 +33,10 @@ public class BluetoothScanner implements IScanner {
 	BluetoothSocket m_Socket;
 	BluetoothAdapter m_adapter;
 	static BluetoothDevice Device;
-	public BluetoothScanner(String addr) {
+	String m_Pin;
+	public BluetoothScanner(String addr,String pin) {
 		m_BluetoothAddr = addr;
+		m_Pin = pin;
 	}
 	
 	/**
@@ -45,7 +51,7 @@ public class BluetoothScanner implements IScanner {
 		
 		if (Device.getBondState() != BluetoothDevice.BOND_BONDED) {
 			try {
-				Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, "0000");
+				Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, m_Pin);
 				Comp_BluetoothDeviceManager.createBond(Device.getClass(), Device);
 			} catch (Exception e) {
 				try {
@@ -69,10 +75,8 @@ public class BluetoothScanner implements IScanner {
 	}
 
     private void connectDevice(BluetoothDevice device) throws Exception {          
-        final String strUuid = "00001101-0000-1000-8000-00805F9B34FB";     
-        UUID uuid = UUID.fromString(strUuid);   
         Log.v(TAG, "start connect device " + device.getName());
-        m_Socket = device.createRfcommSocketToServiceRecord(uuid);     
+        m_Socket = device.createRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);     
         m_Socket.connect();  
         //开启线程接收扫描枪数据
         new Thread(runForReceive).start();

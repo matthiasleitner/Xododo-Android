@@ -168,6 +168,10 @@ public class API_PosPrinter extends UZModule {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param moduleContext {printerAddr:'打印机地址' , pin:'蓝牙配对码'}
+	 */
 	public void jsmethod_openCashBox(final UZModuleContext moduleContext)
 	{
 		new Thread(new Runnable() {
@@ -177,9 +181,10 @@ public class API_PosPrinter extends UZModule {
 				try
 				{
 					String printerAddr = moduleContext.optString("printerAddr");
+					String pin = moduleContext.optString("pin" , "0000");
 					IPrinter ipPrinter = null;
 					if(printerAddr.contains(":")) {
-						ipPrinter = new BluetoothPrinter(printerAddr);
+						ipPrinter = new BluetoothPrinter(printerAddr,pin);
 					}
 					else if(printerAddr.contains(".")) {
 						ipPrinter = new NetPrinter(printerAddr);
@@ -207,7 +212,8 @@ public class API_PosPrinter extends UZModule {
 			@Override
 			public void run() {
 				String addr = moduleContext.optString("addr");
-				BluetoothScanner scanner = new BluetoothScanner(addr);
+				String pin = moduleContext.optString("pin" , "0000");
+				BluetoothScanner scanner = new BluetoothScanner(addr,pin);
 				//注册扫描枪回调事件
 				scanner.setOnReceiveListener(new OnReceiveListener() {
 					
@@ -246,7 +252,7 @@ public class API_PosPrinter extends UZModule {
 
 	/**
 	 * 打印二维码
-	 * @param moduleContext {printerAddr: '打印机Mac地址或IP地址' , code:'二维码内容' ,width:二维码宽,height:二维码高}
+	 * @param moduleContext {printerAddr: '打印机Mac地址或IP地址',pin:'蓝牙配对码' , code:'二维码内容' ,width:二维码宽,height:二维码高}
 	 */
 	public void jsmethod_printQRCode(final UZModuleContext moduleContext){
 		// 必须在另一个线程执行，因为socket在当前线程创建不了
@@ -257,12 +263,13 @@ public class API_PosPrinter extends UZModule {
 				try {
 					String code = moduleContext.optString("code");
 					String printerAddr = moduleContext.optString("printerAddr");
+					String pin = moduleContext.optString("pin" , "0000");
 					int width = moduleContext.optInt("width");
 					int height = moduleContext.optInt("height");
 
 					IPrinter ipPrinter = null;
 					if (printerAddr.contains(":")) {
-						ipPrinter = new BluetoothPrinter(printerAddr);
+						ipPrinter = new BluetoothPrinter(printerAddr,pin);
 					} else if (printerAddr.contains(".")) {
 						ipPrinter = new NetPrinter(printerAddr);
 					} else {
@@ -277,7 +284,7 @@ public class API_PosPrinter extends UZModule {
 	}
 	
 	// 传入 JSON 格式
-		// { taskList: [ printerAddr: '打印机Mac地址或IP地址', content: '打印内容', copyNum '可选，打印次数' ] }
+		// { taskList: [ printerAddr: '打印机Mac地址或IP地址',pin:'蓝牙配对号，可以为null' content: '打印内容', copyNum '可选，打印次数' ] }
 	public void jsmethod_printOnSpecifiedPrinters(final UZModuleContext moduleContext){
 		//必须在另一个线程执行，因为socket在当前线程创建不了
 		new Thread(new Runnable() {
@@ -291,11 +298,12 @@ public class API_PosPrinter extends UZModule {
 						JSONObject jo = taskList.getJSONObject(i);
 						String printerAddr = jo.getString("printerAddr");
 						String content = jo.getString("content");
+						String pin = jo.optString("pin" , "0000");
 						int copyNum = jo.optInt("copyNum");
 
 						IPrinter ipPrinter = null;
 						if(printerAddr.contains(":")) {
-							ipPrinter = new BluetoothPrinter(printerAddr);
+							ipPrinter = new BluetoothPrinter(printerAddr,pin);
 						}
 						else if(printerAddr.contains(".")) {
 							ipPrinter = new NetPrinter(printerAddr);

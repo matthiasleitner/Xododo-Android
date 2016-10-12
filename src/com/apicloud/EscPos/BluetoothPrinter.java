@@ -25,9 +25,16 @@ public class BluetoothPrinter implements IPrinter {
 
 	static BluetoothDevice Device;
 	String mAddr;
-	public BluetoothPrinter(String bluetoothAddr)
+	String mPin;
+	/**
+	 * 
+	 * @param bluetoothAddr ¿∂—¿µÿ÷∑
+	 * @param pin ≈‰∂‘√‹¬Î
+	 */
+	public BluetoothPrinter(String bluetoothAddr,String pin)
 	{
 		mAddr = bluetoothAddr;
+		mPin = pin;
 	}
 	
 	@Override
@@ -75,7 +82,7 @@ public class BluetoothPrinter implements IPrinter {
 		
 		if (Device.getBondState() != BluetoothDevice.BOND_BONDED) {
 			try {
-				Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, "0000");
+				Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, mPin);
 				Comp_BluetoothDeviceManager.createBond(Device.getClass(), Device);
 			} catch (Exception e) {
 				try {
