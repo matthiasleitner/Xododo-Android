@@ -34,6 +34,11 @@ public class BluetoothScanner implements IScanner {
 	BluetoothAdapter m_adapter;
 	static BluetoothDevice Device;
 	String m_Pin;
+	/**
+	 * 
+	 * @param addr 蓝牙地址
+	 * @param pin 配对码
+	 */
 	public BluetoothScanner(String addr,String pin) {
 		m_BluetoothAddr = addr;
 		m_Pin = pin;

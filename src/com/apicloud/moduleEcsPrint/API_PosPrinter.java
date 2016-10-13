@@ -149,24 +149,7 @@ public class API_PosPrinter extends UZModule {
 			}
 		}
 	}
-	
-	// 传入 JSON 格式
-	// { content: '打印内容', copyNum '可选，打印次数' }
-	public void jsmethod_printOnBondedPrinter(UZModuleContext moduleContext) {
-		
-		String content = moduleContext.optString("content", "null");
-		int copyNum = moduleContext.optInt("copyNum", 1);
-		
-		Util_ParsePrintContent parser = new Util_ParsePrintContent(content);
-		byte[] printData = parser.GetPrintCommandBytes();
 
-		Comp_BluetoothDeviceManager deviceManager = new Comp_BluetoothDeviceManager();
-		List<BTDevice> bondedbtDevices = deviceManager.GetBondedDevices();
-		for (BTDevice device : bondedbtDevices) {
-			Comp_BluetoothPrint printer = Comp_BluetoothPrint.GetInstance(device.address);
-			printer.ConnectAndSendData(printData, copyNum);
-		}
-	}
 	
 	/**
 	 * 
@@ -182,17 +165,8 @@ public class API_PosPrinter extends UZModule {
 				{
 					String printerAddr = moduleContext.optString("printerAddr");
 					String pin = moduleContext.optString("pin" , "0000");
-					IPrinter ipPrinter = null;
-					if(printerAddr.contains(":")) {
-						ipPrinter = new BluetoothPrinter(printerAddr,pin);
-					}
-					else if(printerAddr.contains(".")) {
-						ipPrinter = new NetPrinter(printerAddr);
-					}
-					else
-					{
-						throw new Exception("打印机地址错误");
-					}
+					//创建打印机对象实例
+					IPrinter ipPrinter = createPrinter(printerAddr,pin);
 					ipPrinter.openCashBox();
 				}
 				catch(Exception e)
@@ -283,6 +257,33 @@ public class API_PosPrinter extends UZModule {
 		}).start();
 	}
 	
+	/**
+	 * 创建打印机实例
+	 * @param address 打印机地址
+	 * @param pin 配对编码，如蓝牙的配对码，如果为null，则默认0000
+	 * @return
+	 * @throws Exception 
+	 */
+	IPrinter createPrinter(String address , String pin) throws Exception
+	{
+		if(pin == null || pin.length() == 0)
+			pin = "0000";
+		
+		IPrinter ipPrinter = null;
+		if(address.contains(":")) {
+			ipPrinter = new BluetoothPrinter(address,pin);
+		}
+		else if(address.contains(".")) {
+			ipPrinter = new NetPrinter(address);
+		}
+		else
+		{
+			throw new Exception("打印机地址错误:" + address);
+		}
+		
+		return ipPrinter;
+	}
+	
 	// 传入 JSON 格式
 		// { taskList: [ printerAddr: '打印机Mac地址或IP地址',pin:'蓝牙配对号，可以为null' content: '打印内容', copyNum '可选，打印次数' ] }
 	public void jsmethod_printOnSpecifiedPrinters(final UZModuleContext moduleContext){
@@ -301,17 +302,8 @@ public class API_PosPrinter extends UZModule {
 						String pin = jo.optString("pin" , "0000");
 						int copyNum = jo.optInt("copyNum");
 
-						IPrinter ipPrinter = null;
-						if(printerAddr.contains(":")) {
-							ipPrinter = new BluetoothPrinter(printerAddr,pin);
-						}
-						else if(printerAddr.contains(".")) {
-							ipPrinter = new NetPrinter(printerAddr);
-						}
-						else
-						{
-							throw new Exception("打印机地址错误");
-						}
+						//创建打印机对象实例
+						IPrinter ipPrinter = createPrinter(printerAddr,pin);
 						ipPrinter.print(content, copyNum);
 						
 						//如果不是最后一个打印任务，稍微停一停，让打印机自己缓一缓，否则打印机可能会出现2-3秒的反应迟钝
