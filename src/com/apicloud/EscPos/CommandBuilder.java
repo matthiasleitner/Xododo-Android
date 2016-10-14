@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import com.apicloud.EscPos.Format.EscStringParser;
 import com.apicloud.moduleEcsPrint.API_PosPrinter;
+import com.apicloud.other.QRCodeUtil;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -50,7 +52,7 @@ public class CommandBuilder {
 	 */
 	public byte[] openCashBox()
 	{
-		return new byte[]{(byte)27, (byte)112,(byte)0,(byte)60,(byte)255};
+		return new byte[]{27, 112,0,60,(byte)255};
 	}
 	
 	/**
@@ -77,6 +79,14 @@ public class CommandBuilder {
                  //标准大小
                  data.write( fontSize(1) );
              }
+             else if (line.contains("<A>"))
+             {
+                 line = line.replaceAll("<A>|</A>", "");
+                 //居中
+                 data.write( textAlign(1) );
+                 
+                 data.write( fontSize(2) );
+             }
              else if (line.contains("<CA>"))
              {
             	 line = line.replaceAll("<CA>|</CA>", "");
@@ -93,6 +103,66 @@ public class CommandBuilder {
                  //标准大小
                  data.write( fontSize(1) );
                  data.write( bold(true) );
+             }
+             else if (line.contains("<L>"))
+             {
+            	 line = line.replaceAll("<L>|</L>", "");
+            	//左对齐
+                 data.write( textAlign(0) );
+                 //字体高度增加
+                 data.write( fontSizeSetHeight(1) );
+             }
+             else if (line.contains("<AB>"))
+             {
+            	 line = line.replaceAll("<AB>|</AB>", "");
+            	//左对齐
+                 data.write( textAlign(0) );
+
+                 data.write( fontSize(2) );
+                 data.write( bold(true) );
+             }
+             else if (line.contains("<AL>"))
+             {
+            	 line = line.replaceAll("<AL>|</AL>", "");
+            	//左对齐
+                 data.write( textAlign(0) );
+
+                 data.write( fontSize(2) );
+             }
+             else if (line.contains("<BL>"))
+             {
+            	 line = line.replaceAll("<BL>|</BL>", "");
+            	//左对齐
+                 data.write( textAlign(0) );
+
+                 data.write( fontSizeSetHeight(1) );
+                 data.write( bold(true) );
+             }
+             else if (line.contains("<ABL>"))
+             {
+            	 line = line.replaceAll("<ABL>|</ABL>", "");
+            	//左对齐
+                 data.write( textAlign(0) );
+
+                 data.write( fontSize(2) );
+                 data.write( fontSizeSetHeight(1) );
+                 data.write( bold(true) );
+             }
+             else if (line.contains("<AT>"))
+             {
+            	 line = line.replaceAll("<AT>|</AT>", "");
+            	//左对齐
+                 data.write( textAlign(0) );
+
+                 data.write( fontSize(4) );
+             }
+             else if (line.contains("<QR>"))
+             {
+            	 line = line.replaceAll("<QR>|</QR>", "");
+            	 Bitmap bitmap = QRCodeUtil.createQRImage(line, 300, 300, null);
+         		data.write( getImageBytes(bitmap) );
+         		bitmap.recycle();
+         		line="";
              }
              else if (line.contains("<CUT>"))
              {
@@ -152,7 +222,7 @@ public class CommandBuilder {
 	 * @param align 0:左对齐 1:中对齐 2:右对齐
 	 * @return
 	 */
-	byte[] textAlign(int align)
+	public byte[] textAlign(int align)
 	{
 		return new byte[]{ 27 , 97 , (byte)align };
 	}
@@ -171,7 +241,7 @@ public class CommandBuilder {
 	 * @param onOff 开启还是关闭 true:on 
 	 * @return
 	 */
-	byte[] bold(boolean onOff) {
+	public byte[] bold(boolean onOff) {
 		return new byte[]{ 27 , 69 , onOff ? (byte)0xF : (byte)0 };
 	}
 	
@@ -180,11 +250,46 @@ public class CommandBuilder {
 	 * @param num 放大倍数
 	 * @return
 	 */
-	byte[] fontSize(int num){
+	public byte[] fontSize(int num){
 		byte realSize = 0;
 		switch (num) {
 		case 1:
 			realSize = 0;
+			break;
+		case 2:
+			realSize = 17;
+			break;
+		case 3:
+			realSize = 34;
+			break;
+		case 4:
+			realSize = 51;
+			break;
+		case 5:
+			realSize = 68;
+			break;
+		case 6:
+			realSize = 85;
+			break;
+		case 7:
+			realSize = 102;
+			break;
+		case 8:
+			realSize = 119;
+			break;
+		}
+		byte[] result = new byte[3];
+		result[0] = 29;
+		result[1] = 33;
+		result[2] = realSize;
+		return result;
+	}
+	
+	public byte[] fontSizeSetHeight(int num){
+		byte realSize = 0;
+		switch (num) {
+		case 1:
+			realSize = 1;
 			break;
 		case 2:
 			realSize = 17;
@@ -234,7 +339,7 @@ public class CommandBuilder {
 	 * 
 	 * @return
 	 */
-	byte[] feedPaperCutAll() {
+	public byte[] feedPaperCutAll() {
 		byte[] result = new byte[4];
 		result[0] = 29;
 		result[1] = 86;

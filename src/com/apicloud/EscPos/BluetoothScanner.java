@@ -31,8 +31,7 @@ public class BluetoothScanner implements IScanner {
 	String m_BluetoothAddr;
 	static String TAG = "BluetoothScanner";
 	BluetoothSocket m_Socket;
-	BluetoothAdapter m_adapter;
-	static BluetoothDevice Device;
+	BluetoothDevice m_Device;
 	String m_Pin;
 	/**
 	 * 
@@ -46,22 +45,26 @@ public class BluetoothScanner implements IScanner {
 	
 	/**
 	 * 检查设备是否配对
+	 * @throws Exception 
 	 */
-	void checkDeviceState(){
+	void checkDeviceState() throws Exception{
 		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 
-		if (Device == null) {
-			Device = adapter.getRemoteDevice(m_BluetoothAddr);
+		m_Device = adapter.getRemoteDevice(m_BluetoothAddr);
+		
+		if(m_Device == null)
+		{
+			throw new Exception("无法连接蓝牙扫描枪");
 		}
 		
-		if (Device.getBondState() != BluetoothDevice.BOND_BONDED) {
+		if (m_Device.getBondState() != BluetoothDevice.BOND_BONDED) {
 			try {
-				Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, m_Pin);
-				Comp_BluetoothDeviceManager.createBond(Device.getClass(), Device);
+				Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, m_Pin);
+				Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
 			} catch (Exception e) {
 				try {
-					Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, "1234");
-					Comp_BluetoothDeviceManager.createBond(Device.getClass(), Device);
+					Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, "1234");
+					Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
@@ -76,7 +79,7 @@ public class BluetoothScanner implements IScanner {
 	public void startListen() throws Exception
 	{
 		checkDeviceState();
-		connectDevice(Device);
+		connectDevice(m_Device);
 	}
 
     private void connectDevice(BluetoothDevice device) throws Exception {          

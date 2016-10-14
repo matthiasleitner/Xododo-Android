@@ -1,5 +1,6 @@
 package com.apicloud.EscPos;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -23,9 +24,10 @@ public class BluetoothPrinter implements IPrinter {
 	private static final UUID SerialPortServiceClass_UUID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-	static BluetoothDevice Device;
-	String mAddr;
+	BluetoothDevice m_Device;
+	protected String mAddr;
 	String mPin;
+	BluetoothSocket mSocket;
 	/**
 	 * 
 	 * @param bluetoothAddr 蓝牙地址
@@ -35,6 +37,11 @@ public class BluetoothPrinter implements IPrinter {
 	{
 		mAddr = bluetoothAddr;
 		mPin = pin;
+	}
+	public BluetoothPrinter(String bluetoothAddr)
+	{
+		mAddr = bluetoothAddr;
+		mPin = "0000";
 	}
 	
 	@Override
@@ -72,27 +79,49 @@ public class BluetoothPrinter implements IPrinter {
 
 	/**
 	 * 检查设备是否配对
+	 * @throws Exception 
 	 */
-	void checkDeviceState(){
+	void checkDevicePinState() throws Exception{
 		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 
-		if (Device == null) {
-			Device = adapter.getRemoteDevice(mAddr);
-		}
+		m_Device = adapter.getRemoteDevice(mAddr);
 		
-		if (Device.getBondState() != BluetoothDevice.BOND_BONDED) {
+		if(m_Device == null)
+		{
+			throw new Exception("无法连接蓝牙打印机");
+		}
+
+		int state = m_Device.getBondState();
+		if (state != BluetoothDevice.BOND_BONDED) {
 			try {
-				Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, mPin);
-				Comp_BluetoothDeviceManager.createBond(Device.getClass(), Device);
+				Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, mPin);
+				Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
 			} catch (Exception e) {
 				try {
-					Comp_BluetoothDeviceManager.SetPin(Device.getClass(), Device, "1234");
-					Comp_BluetoothDeviceManager.createBond(Device.getClass(), Device);
+					Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, "1234");
+					Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
 			}
 		}
+	}
+	
+	/**
+	 * 打开socket，获取OutputStream
+	 * @return
+	 * @throws Exception
+	 */
+	OutputStream getSocketStream() throws Exception
+	{
+		mSocket = m_Device.createRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);
+		mSocket.connect();
+		return mSocket.getOutputStream();
+	}
+	
+	void closeSocket() throws IOException
+	{
+		mSocket.close();
 	}
 	
 	/**
@@ -104,24 +133,43 @@ public class BluetoothPrinter implements IPrinter {
 	void write2Device(byte[] data1 , byte[] data2) throws Exception
 	{
 		//检查设备是否配对
-		checkDeviceState();
+		checkDevicePinState();
 		int errorCount = 0;
 		while (true) {
 			try {
-				BluetoothSocket socket = Device.createRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);
-				socket.connect();
-				OutputStream printStream = socket.getOutputStream();
+				//打开socket，获取OutputStream
+				OutputStream printStream = getSocketStream();
 
-				printStream.write(data1);
+				//为了防止数据过长，分行打印
+				int position = 0;
+				while(position < data1.length)
+				{
+					ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+					//先获取一行数据
+					for(int i = position ; i < data1.length ; i ++)
+					{
+						byte b = data1[i];
+						buffer.write(b);
+						if(b == 10)
+						{
+							break;
+						}
+					}
+					position += buffer.size();
+					//把这行数据发送到打印机
+					printStream.write(buffer.toByteArray());
+				}
 
 				if(data2 != null)
 				printStream.write(data2);
 				
 				// 关闭 socket
 				printStream.close();
-				socket.close();
+				closeSocket();
 				break;
 			} catch (Exception e) {
+				checkDevicePinState();
+				
 				//连接失败，可能其他设备在连接此打印机，继续重试，
 				try {
 					errorCount++;
