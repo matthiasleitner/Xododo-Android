@@ -284,9 +284,20 @@ public class API_PosPrinter extends UZModule {
 		return ipPrinter;
 	}
 	
+	public void jsmethod_startLog(final UZModuleContext moduleContext){
+		try
+		{
+			Helper.startLog();
+		}
+		catch(Exception e)
+		{
+			Helper.alert(m_Context,handler, "startLog Error", e.getMessage());
+		}
+	}
 	// 传入 JSON 格式
 		// { taskList: [ printerAddr: '打印机Mac地址或IP地址',pin:'蓝牙配对号，可以为null' content: '打印内容', copyNum '可选，打印次数' ] }
 	public void jsmethod_printOnSpecifiedPrinters(final UZModuleContext moduleContext){
+		Helper.Log("printOnSpecifiedPrinters", "enter");
 		//必须在另一个线程执行，因为socket在当前线程创建不了
 		new Thread(new Runnable() {
 
@@ -302,6 +313,10 @@ public class API_PosPrinter extends UZModule {
 						String pin = jo.optString("pin" , "0000");
 						int copyNum = jo.optInt("copyNum");
 
+						Helper.Log("printOnSpecifiedPrinters printerAddr", printerAddr);
+						Helper.Log("printOnSpecifiedPrinters pin", pin);
+						Helper.Log("printOnSpecifiedPrinters content", content);
+						
 						//创建打印机对象实例
 						IPrinter ipPrinter = createPrinter(printerAddr,pin);
 						ipPrinter.print(content, copyNum);
@@ -312,7 +327,9 @@ public class API_PosPrinter extends UZModule {
 							Thread.sleep(50);
 						}
 					} catch (Exception e) {
-						Helper.alert(m_Context,handler, "Error", e.getMessage());
+						String err = e.getMessage();
+						Helper.Log("printOnSpecifiedPrinters Error", err);
+						Helper.alert(m_Context,handler, "Error", err);
 						return;
 					}
 

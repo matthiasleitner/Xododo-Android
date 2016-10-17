@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 
 import com.apicloud.moduleEcsPrint.API_PosPrinter;
 import com.apicloud.moduleEcsPrint.Comp_BluetoothDeviceManager;
+import com.apicloud.other.Helper;
 import com.apicloud.other.QRCodeUtil;
 /**
  * 蓝牙打印机
@@ -46,12 +47,18 @@ public class BluetoothPrinter implements IPrinter {
 	
 	@Override
 	public void print(String content, int copyNum) throws Exception {
+		boolean hasCut = content.contains("<CUT>");
 		// 获取ESC命令
 		CommandBuilder cmdBuilder = new CommandBuilder();
 		byte[] data1 = cmdBuilder.getPrintCmd(content, copyNum);
-		// 发送两个打印命令，因为缓冲区的前面有两个空行
-		byte[] data2 = new byte[] { 10, 10 };
-
+		
+		byte[] data2 = null;
+		if(hasCut == false)//判断是否有切纸命令
+		{
+			//如果有切纸的命令，不需要外加两个10的命令，也可以打印全
+			//如果没有切纸的命令， 发送两个打印命令，因为缓冲区的前面有两个空行
+			data2 = new byte[] { 10, 10 };
+		}
 		write2Device(data1, data2);
 	}
 	
@@ -78,7 +85,7 @@ public class BluetoothPrinter implements IPrinter {
 	}
 
 	/**
-	 * 检查设备是否配对
+	 * 检查设备是否配对(继承者需要重载)
 	 * @throws Exception 
 	 */
 	void checkDevicePinState() throws Exception{
@@ -92,11 +99,15 @@ public class BluetoothPrinter implements IPrinter {
 		}
 
 		int state = m_Device.getBondState();
+
+		Helper.Log("BluetoothPrinter bond state", state + "");
 		if (state != BluetoothDevice.BOND_BONDED) {
 			try {
+				Helper.Log("BluetoothPrinter", "尝试绑定");
 				Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, mPin);
 				Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
 			} catch (Exception e) {
+				Helper.Log("BluetoothPrinter bond error", e.getMessage());
 				try {
 					Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, "1234");
 					Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
@@ -108,17 +119,24 @@ public class BluetoothPrinter implements IPrinter {
 	}
 	
 	/**
-	 * 打开socket，获取OutputStream
+	 * 打开socket，获取OutputStream(继承者需要重载)
 	 * @return
 	 * @throws Exception
 	 */
 	OutputStream getSocketStream() throws Exception
 	{
+		Helper.Log("BluetoothPrinter getSocketStream", "尝试连接蓝牙设备");
 		mSocket = m_Device.createRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);
 		mSocket.connect();
-		return mSocket.getOutputStream();
+		OutputStream os = mSocket.getOutputStream();
+		Helper.Log("BluetoothPrinter getSocketStream", "成功连接");
+		return os;
 	}
 	
+	/**
+	 * 关闭socket(继承者需要重载)
+	 * @throws IOException
+	 */
 	void closeSocket() throws IOException
 	{
 		mSocket.close();
@@ -158,16 +176,22 @@ public class BluetoothPrinter implements IPrinter {
 					position += buffer.size();
 					//把这行数据发送到打印机
 					printStream.write(buffer.toByteArray());
+					printStream.flush();
+					//不能输出数据太快，打印机可能打印慢，太快会在打印机丢积数据，打印机的内存有限，丢积数据过多，会有数据丢失
+					Thread.sleep(50);
 				}
 
 				if(data2 != null)
-				printStream.write(data2);
+				printStream.write(data2); 
 				
+				printStream.flush();
+				Helper.Log("Printer write2device", "写完数据");
 				// 关闭 socket
 				printStream.close();
 				closeSocket();
 				break;
 			} catch (Exception e) {
+				Helper.Log("Printer write error", "重新尝试连接打印机，并发送数据");
 				checkDevicePinState();
 				
 				//连接失败，可能其他设备在连接此打印机，继续重试，

@@ -9,6 +9,7 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 import com.apicloud.moduleEcsPrint.API_PosPrinter;
+import com.apicloud.other.Helper;
 import com.apicloud.other.QRCodeUtil;
 
 import android.graphics.Bitmap;
@@ -46,11 +47,14 @@ public class NetPrinter extends BluetoothPrinter {
 
 	@Override
 	OutputStream getSocketStream() throws Exception {
+		Helper.Log("NetPrinter getSocketStream", "尝试连接");
 		mSocket = new Socket();
 		SocketAddress socAddress = new InetSocketAddress(mAddr, SocketPort); 
 		//设置连接超时时间，单位毫秒
 		mSocket.connect(socAddress, 1500);
-		return mSocket.getOutputStream();
+		OutputStream os = mSocket.getOutputStream();
+		Helper.Log("NetPrinter getSocketStream", "连接成功");
+		return os;
 	}
 
 
