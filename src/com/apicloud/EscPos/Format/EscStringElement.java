@@ -16,10 +16,11 @@ import com.apicloud.other.ByteArrayOutput;
 import com.apicloud.other.QRCodeUtil;
 
 public class EscStringElement  {
-	String m_tagName = "";
-	public String Text = "";
-		
+	public String TagName = "";
+	
+	public ArrayList<EscStringElement> Children = new ArrayList<EscStringElement>();
 	static Hashtable<String, byte[]> Commands = null;
+	public EscStringElement Parent;
 	EscStringElement()
 	{
 		if(Commands == null)
@@ -35,16 +36,51 @@ public class EscStringElement  {
 	}
 	
 	/**
+	 * 获取标签的命令
+	 * @param buffer
+	 */
+	void getTagBytes(ByteArrayOutput buffer)
+	{
+		if( TagName.equalsIgnoreCase("br") )
+		{
+		}
+		else if( TagName.equalsIgnoreCase("CUT") )
+		{
+		}
+		else if( TagName.equalsIgnoreCase("QR") )
+		{
+		}
+		else
+		{
+			if(this.Parent == null)
+			{
+				//如果上面没有标签，把字体设置为标准大小
+				CommandBuilder builder = new CommandBuilder();
+				buffer.write( builder.textAlign(0) );
+	             //标准大小
+				buffer.write( builder.fontSize(1) );
+				buffer.write( builder.bold(false) );
+			}
+			for(int i = 0 ; i < TagName.length() ; i ++)
+			{
+				String name = TagName.substring(i, i + 1);
+				byte[] cmd = Commands.get(name);
+				buffer.write( cmd );
+			}
+		}
+	}
+	
+	/**
 	 * 把命令写入缓冲流
 	 * @return
 	 */
 	public void getBytes(ByteArrayOutput buffer)
 	{
-		if( m_tagName.equalsIgnoreCase("br") )
+		if( TagName.equalsIgnoreCase("br") )
 		{
 			buffer.write(10);
 		}
-		else if( m_tagName.equalsIgnoreCase("CUT") )
+		else if( TagName.equalsIgnoreCase("CUT") )
 		{
 			if( buffer.LastIsLF == false )
 			{
@@ -55,36 +91,40 @@ public class EscStringElement  {
 			byte[] data = builder.feedPaperCutAll();
 			buffer.write( data);
 		}
-		else if( m_tagName.equalsIgnoreCase("QR") )
+		else if( TagName.equalsIgnoreCase("QR") )
 		{
-			if( buffer.LastIsLF == false )
+			if(this.Children.size() > 0)
 			{
-				//最后一个不是换行符，加个换行符，再打印图片
-				buffer.write(10);
+				if( buffer.LastIsLF == false )
+				{
+					//最后一个不是换行符，加个换行符，再打印图片
+					buffer.write(10);
+				}
+				this.Children.get(0).getBytes(buffer);
 			}
-			CommandBuilder builder = new CommandBuilder();
-			Bitmap bitmap = QRCodeUtil.createQRImage(this.Text, 300, 300, null);
-			byte[] data = builder.getImageBytes(bitmap);
-			buffer.write( data );
-      		bitmap.recycle();
 		}
 		else
 		{
-			for(int i = 0 ; i < this.m_tagName.length() ; i ++)
-			{
-				String name = m_tagName.substring(i, i + 1);
-				byte[] cmd = Commands.get(name);
-				buffer.write( cmd );
-			}
 			
-			if(this.Text.length() > 0)
+			for(EscStringElement child : this.Children )
 			{
-				try {
-					byte[] data = this.Text.getBytes("gbk");
-					buffer.write( data );
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
+				if( child instanceof EscTextNode )
+				{
+					//如果是输出文字，把父节点的格式定义重新输出一次，如<A><B>hello</B></A>
+					//打印hello的时候，会依次把A、B这两条命令先输出一次
+					EscStringElement parent = this;
+					ArrayList<EscStringElement> links = new ArrayList<EscStringElement>();
+					while(parent != null)
+					{
+						links.add(0, parent);
+						parent = parent.Parent;
+					}
+					for( EscStringElement p : links )
+					{
+						p.getTagBytes(buffer);
+					}
 				}
+				child.getBytes(buffer);
 			}
 		}
 	}
@@ -107,30 +147,41 @@ public class EscStringElement  {
 					}
 					return;
 				}
-				else if(m_tagName.length() == 0)
+				else if(TagName.length() == 0 && this.Children.size() == 0 )
 				{
 					content.deleteCharAt(0);
 					_char = content.charAt(0);
 					//开始标签，获取标签名
 					while(_char != '>' && content.length() > 1)
 					{
-						m_tagName += _char;
+						TagName += _char;
 						content.deleteCharAt(0);
 						_char = content.charAt(0);
 					}
 					content.deleteCharAt(0);
-					if(m_tagName.equalsIgnoreCase("BR") || m_tagName.equalsIgnoreCase("CUT") )
+					if(TagName.equalsIgnoreCase("BR") || TagName.equalsIgnoreCase("CUT") )
 					{
 						//换行符，直接返回
 						return;
 					}
 					continue;
 				}
+				else
+				{
+					EscStringElement strEle = new EscStringElement();
+					this.Children.add(strEle);
+					
+					strEle.Parent = this;
+					strEle.Parse(content);
+				}
 			}
 			else
 			{
-				Text += _char;
-				content.deleteCharAt(0);
+				EscTextNode textEle = new EscTextNode();
+				this.Children.add(textEle);
+				
+				textEle.Parent = this;
+				textEle.Parse(content);
 				continue;
 			}
 			

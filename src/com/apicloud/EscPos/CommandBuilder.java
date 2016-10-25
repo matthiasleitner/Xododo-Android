@@ -26,8 +26,11 @@ public class CommandBuilder {
 		
 		//初始化打印机
 		buffer.write(initPriner());
+		
 		//解析内容
-		byte[] bs = getContentByFormat(content);
+		EscStringParser parser = new EscStringParser();
+		parser.Parse(content);
+		byte[] bs = parser.getBytes();//getContentByFormat(content);
 		//放入缓冲区
 		for(int i = 0 ; i < copyNum ; i ++)
 		{
@@ -55,159 +58,159 @@ public class CommandBuilder {
 		return new byte[]{27, 112,0,60,(byte)255};
 	}
 	
-	/**
-	 * 解析内容里的标签格式
-	 * @param content
-	 * @return
-	 * @throws IOException 
-	 */
-	byte[] getContentByFormat(String content) throws IOException
-	{
-		boolean lastIsLF = false;//表示最后一个字符是否是换行符
-		 ByteArrayOutputStream data = new ByteArrayOutputStream();
-         String[] lines = content.split("<BR>");
-         for(int i = 0; i < lines.length; i++)
-         {
-             String line = lines[i];
-             //是否切纸
-             boolean cutPage = false;
-             if (line.contains("<C>"))
-             {
-                 line = line.replaceAll("<C>|</C>", "");
-                 //居中
-                 data.write( textAlign(1) );
-                 //标准大小
-                 data.write( fontSize(1) );
-             }
-             else if (line.contains("<A>"))
-             {
-                 line = line.replaceAll("<A>|</A>", "");
-                 //居中
-                 data.write( textAlign(1) );
-                 
-                 data.write( fontSize(2) );
-             }
-             else if (line.contains("<CA>"))
-             {
-            	 line = line.replaceAll("<CA>|</CA>", "");
-            	//居中
-                 data.write( textAlign(1) );
-                 //2倍大小
-                 data.write( fontSize(2) );
-             }
-             else if (line.contains("<B>"))
-             {
-            	 line = line.replaceAll("<B>|</B>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-                 //标准大小
-                 data.write( fontSize(1) );
-                 data.write( bold(true) );
-             }
-             else if (line.contains("<L>"))
-             {
-            	 line = line.replaceAll("<L>|</L>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-                 //字体高度增加
-                 data.write( fontSizeSetHeight(1) );
-             }
-             else if (line.contains("<AB>"))
-             {
-            	 line = line.replaceAll("<AB>|</AB>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-
-                 data.write( fontSize(2) );
-                 data.write( bold(true) );
-             }
-             else if (line.contains("<AL>"))
-             {
-            	 line = line.replaceAll("<AL>|</AL>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-
-                 data.write( fontSize(2) );
-             }
-             else if (line.contains("<BL>"))
-             {
-            	 line = line.replaceAll("<BL>|</BL>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-
-                 data.write( fontSizeSetHeight(1) );
-                 data.write( bold(true) );
-             }
-             else if (line.contains("<ABL>"))
-             {
-            	 line = line.replaceAll("<ABL>|</ABL>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-
-                 data.write( fontSize(2) );
-                 data.write( fontSizeSetHeight(1) );
-                 data.write( bold(true) );
-             }
-             else if (line.contains("<AT>"))
-             {
-            	 line = line.replaceAll("<AT>|</AT>", "");
-            	//左对齐
-                 data.write( textAlign(0) );
-
-                 data.write( fontSize(4) );
-             }
-             else if (line.contains("<QR>"))
-             {
-            	 line = line.replaceAll("<QR>|</QR>", "");
-            	 Bitmap bitmap = QRCodeUtil.createQRImage(line, 300, 300, null);
-         		data.write( getImageBytes(bitmap) );
-         		bitmap.recycle();
-         		line="";
-             }
-             else if (line.contains("<CUT>"))
-             {
-            	 cutPage = true;
-            	 line = line.replaceAll("<CUT>", "");
-             }
-             else
-             {
-            	//左对齐
-                 data.write( textAlign(0) );
-                 //标准大小
-                 data.write( fontSize(1) );
-             }
-             
-             //打印内容
-             try {
-            	 if(line.length() > 0)
-            	 {
-            		 data.write(line.getBytes("gbk"));
-            		 lastIsLF = false;
-            	 }
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            
-             if(cutPage)
-             {
-            	 //如果最后一个字符不是换行符，加一个换行符，再切割
-            	 if( lastIsLF == false )
-            	 {
-            		 data.write((byte)10);
-            	 }
-            	 data.write(feedPaperCutAll());
-             }
-             else
-             {
-            	 //打印并换行
-                 data.write((byte)10);
-                 lastIsLF = true;
-             }
-         }
-
-      return data.toByteArray();
-	}
+//	/**
+//	 * 解析内容里的标签格式
+//	 * @param content
+//	 * @return
+//	 * @throws IOException 
+//	 */
+//	byte[] getContentByFormat(String content) throws IOException
+//	{
+//		boolean lastIsLF = false;//表示最后一个字符是否是换行符
+//		 ByteArrayOutputStream data = new ByteArrayOutputStream();
+//         String[] lines = content.split("<BR>");
+//         for(int i = 0; i < lines.length; i++)
+//         {
+//             String line = lines[i];
+//             //是否切纸
+//             boolean cutPage = false;
+//             if (line.contains("<C>"))
+//             {
+//                 line = line.replaceAll("<C>|</C>", "");
+//                 //居中
+//                 data.write( textAlign(1) );
+//                 //标准大小
+//                 data.write( fontSize(1) );
+//             }
+//             else if (line.contains("<A>"))
+//             {
+//                 line = line.replaceAll("<A>|</A>", "");
+//                 //居中
+//                 data.write( textAlign(1) );
+//                 
+//                 data.write( fontSize(2) );
+//             }
+//             else if (line.contains("<CA>"))
+//             {
+//            	 line = line.replaceAll("<CA>|</CA>", "");
+//            	//居中
+//                 data.write( textAlign(1) );
+//                 //2倍大小
+//                 data.write( fontSize(2) );
+//             }
+//             else if (line.contains("<B>"))
+//             {
+//            	 line = line.replaceAll("<B>|</B>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//                 //标准大小
+//                 data.write( fontSize(1) );
+//                 data.write( bold(true) );
+//             }
+//             else if (line.contains("<L>"))
+//             {
+//            	 line = line.replaceAll("<L>|</L>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//                 //字体高度增加
+//                 data.write( fontSizeSetHeight(1) );
+//             }
+//             else if (line.contains("<AB>"))
+//             {
+//            	 line = line.replaceAll("<AB>|</AB>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//
+//                 data.write( fontSize(2) );
+//                 data.write( bold(true) );
+//             }
+//             else if (line.contains("<AL>"))
+//             {
+//            	 line = line.replaceAll("<AL>|</AL>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//
+//                 data.write( fontSize(2) );
+//             }
+//             else if (line.contains("<BL>"))
+//             {
+//            	 line = line.replaceAll("<BL>|</BL>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//
+//                 data.write( fontSizeSetHeight(1) );
+//                 data.write( bold(true) );
+//             }
+//             else if (line.contains("<ABL>"))
+//             {
+//            	 line = line.replaceAll("<ABL>|</ABL>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//
+//                 data.write( fontSize(2) );
+//                 data.write( fontSizeSetHeight(1) );
+//                 data.write( bold(true) );
+//             }
+//             else if (line.contains("<AT>"))
+//             {
+//            	 line = line.replaceAll("<AT>|</AT>", "");
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//
+//                 data.write( fontSize(4) );
+//             }
+//             else if (line.contains("<QR>"))
+//             {
+//            	 line = line.replaceAll("<QR>|</QR>", "");
+//            	 Bitmap bitmap = QRCodeUtil.createQRImage(line, 300, 300, null);
+//         		data.write( getImageBytes(bitmap) );
+//         		bitmap.recycle();
+//         		line="";
+//             }
+//             else if (line.contains("<CUT>"))
+//             {
+//            	 cutPage = true;
+//            	 line = line.replaceAll("<CUT>", "");
+//             }
+//             else
+//             {
+//            	//左对齐
+//                 data.write( textAlign(0) );
+//                 //标准大小
+//                 data.write( fontSize(1) );
+//             }
+//             
+//             //打印内容
+//             try {
+//            	 if(line.length() > 0)
+//            	 {
+//            		 data.write(line.getBytes("gbk"));
+//            		 lastIsLF = false;
+//            	 }
+//			} catch (UnsupportedEncodingException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//            
+//             if(cutPage)
+//             {
+//            	 //如果最后一个字符不是换行符，加一个换行符，再切割
+//            	 if( lastIsLF == false )
+//            	 {
+//            		 data.write((byte)10);
+//            	 }
+//            	 data.write(feedPaperCutAll());
+//             }
+//             else
+//             {
+//            	 //打印并换行
+//                 data.write((byte)10);
+//                 lastIsLF = true;
+//             }
+//         }
+//
+//      return data.toByteArray();
+//	}
 	
 	/**
 	 * 初始化打印机

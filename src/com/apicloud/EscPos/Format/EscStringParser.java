@@ -18,7 +18,7 @@ public class EscStringParser {
 			char _char = content.charAt(0);
 			if(_char == '<' || _char == '>')
 			{
-				if(currentEle.Text.length() > 0)
+				if(currentEle.Children.size() > 0)
 				{
 					Children.add(currentEle);
 					currentEle = new EscStringElement();
@@ -42,6 +42,11 @@ public class EscStringParser {
 		for( EscStringElement element : Children )
 		{
 			element.getBytes(buffer);
+		}
+		if(buffer.LastIsLF == false)
+		{
+			//最后一个字符应该是换行符
+			buffer.write(10);
 		}
 		return buffer.toByteArray();
 	}
