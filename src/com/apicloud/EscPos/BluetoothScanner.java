@@ -3,10 +3,9 @@ package com.apicloud.EscPos;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.UUID;
-
 import com.apicloud.moduleEcsPrint.Comp_BluetoothDeviceManager;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
-
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -14,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.ParcelUuid;
 import android.util.Log;
 /**
  * 蓝牙扫描枪，蓝牙打印机要设为串口模式，如果是键盘模式，可能会有问题
@@ -23,7 +23,7 @@ import android.util.Log;
 public class BluetoothScanner implements IScanner {
 
 	// 蓝牙串口服务 UUID，
-	private static final UUID SerialPortServiceClass_UUID = UUID
+	private UUID SerialPortServiceClass_UUID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 	OnReceiveListener m_listener;
@@ -47,6 +47,7 @@ public class BluetoothScanner implements IScanner {
 	 * 检查设备是否配对
 	 * @throws Exception 
 	 */
+	@SuppressLint("NewApi")
 	void checkDeviceState() throws Exception{
 		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -57,19 +58,29 @@ public class BluetoothScanner implements IScanner {
 			throw new Exception("无法连接蓝牙扫描枪");
 		}
 		
+		
 		if (m_Device.getBondState() != BluetoothDevice.BOND_BONDED) {
 			try {
-				Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, m_Pin);
-				Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
+				boolean hr = m_Device.setPin(m_Pin.getBytes());
+				hr = m_Device.createBond();
 			} catch (Exception e) {
 				try {
-					Comp_BluetoothDeviceManager.SetPin(m_Device.getClass(), m_Device, "1234");
-					Comp_BluetoothDeviceManager.createBond(m_Device.getClass(), m_Device);
+					boolean hr = m_Device.setPin("1234".getBytes());
+					hr = m_Device.createBond();
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
 			}
 		}
+//		boolean hr = m_Device.fetchUuidsWithSdp();
+//		ParcelUuid[] uuids = m_Device.getUuids();
+//
+//		for(int i = 0 ; i < uuids.length ; i ++)
+//		{
+//			ParcelUuid uuid = uuids[i];
+//			SerialPortServiceClass_UUID = uuid.getUuid();
+//			break;
+//		}
 	}
 	
 	/**
@@ -82,9 +93,10 @@ public class BluetoothScanner implements IScanner {
 		connectDevice(m_Device);
 	}
 
-    private void connectDevice(BluetoothDevice device) throws Exception {          
+    @SuppressLint("NewApi")
+	private void connectDevice(BluetoothDevice device) throws Exception {          
         Log.v(TAG, "start connect device " + device.getName());
-        m_Socket = device.createRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);     
+        m_Socket = device.createInsecureRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);     
         m_Socket.connect();  
         //开启线程接收扫描枪数据
         new Thread(runForReceive).start();

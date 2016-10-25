@@ -1,8 +1,12 @@
 {
 	modules:[
-		{
-		    name:'posPrinter',
-		    class:'com.apicloud.moduleEcsPrint.API_PosPrinter'
+    {
+      name: 'posPrinter',
+      class: 'com.apicloud.moduleEcsPrint.API_PosPrinter'
+    },
+    {
+		    name:'BluetoothCodeScanner',
+		    class:'com.apicloud.moduleEcsPrint.API_BluetoothCodeScanner'
 		}
 		
 	]

@@ -2,6 +2,7 @@ package com.apicloud.EscPos;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -46,7 +47,7 @@ public class NetPrinter extends BluetoothPrinter {
 
 
 	@Override
-	OutputStream getSocketStream() throws Exception {
+	OutputStream getSocketOutputStream() throws Exception {
 		Helper.Log("NetPrinter getSocketStream", "尝试连接");
 		mSocket = new Socket();
 		SocketAddress socAddress = new InetSocketAddress(mAddr, SocketPort); 
@@ -56,8 +57,12 @@ public class NetPrinter extends BluetoothPrinter {
 		Helper.Log("NetPrinter getSocketStream", "连接成功");
 		return os;
 	}
-
-
+	
+	@Override
+	InputStream getSocketInputStream() throws Exception
+	{
+		return mSocket.getInputStream();
+	}
 	@Override
 	void closeSocket() throws IOException {
 		mSocket.close();

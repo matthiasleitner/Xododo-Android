@@ -2,9 +2,12 @@ package com.apicloud.EscPos;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.UUID;
+
+import org.json.JSONObject;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -46,6 +49,50 @@ public class BluetoothPrinter implements IPrinter {
 	}
 	
 	@Override
+	public JSONObject getStatus() throws Exception {
+		// 获取ESC命令
+		CommandBuilder cmdBuilder = new CommandBuilder();
+		JSONObject result = new JSONObject();
+		// 检查设备是否配对
+		checkDevicePinState();
+		// 打开socket，获取OutputStream
+		OutputStream printStream = getSocketOutputStream();
+		InputStream readStream = getSocketInputStream();
+
+		// 返回打印机状态
+		printStream.write(cmdBuilder.getStatus(1));
+		int value = readStream.read();
+
+		// 钱箱状态
+		if ((value & (1 << 2)) == 0) {
+			result.put("CashBoxStatus", "opened");
+		} else {
+			result.put("CashBoxStatus", "closed");
+		}
+		// 联机状态
+		if ((value & (1 << 3)) == 0) {
+			result.put("ConnectStatus", "connected");
+		} else {
+			result.put("ConnectStatus", "disconnected");
+		}
+
+		// 返回脱机状态如下
+		printStream.write(cmdBuilder.getStatus(2));
+		value = readStream.read();
+
+		if ((value & (1 << 5)) == 0) {
+			result.put("PaperStatus", "has paper");
+		} else {
+			result.put("PaperStatus", "no paper");
+		}
+
+		printStream.close();
+		printStream.close();
+		closeSocket();
+		return result;
+	}
+	
+	@Override
 	public void print(String content, int copyNum) throws Exception {
 		boolean hasCut = content.contains("<CUT>");
 		// 获取ESC命令
@@ -75,6 +122,20 @@ public class BluetoothPrinter implements IPrinter {
 
 		write2Device(data1, data2);
 	}
+	
+	@Override
+	public void printImage(String base64) throws Exception {
+		Bitmap bitmap = Helper.string2Bitmap(base64);
+		CommandBuilder cmdBuilder = new CommandBuilder();
+		byte[] data1 = cmdBuilder.getImageBytes(bitmap);
+		bitmap.recycle();
+
+		// 发送两个打印命令，因为缓冲区的前面有两个空行
+		byte[] data2 = new byte[] { 10, 10 };
+
+		write2Device(data1, data2);
+	}
+	
 
 	@Override
 	public void openCashBox() throws Exception {
@@ -123,7 +184,7 @@ public class BluetoothPrinter implements IPrinter {
 	 * @return
 	 * @throws Exception
 	 */
-	OutputStream getSocketStream() throws Exception
+	OutputStream getSocketOutputStream() throws Exception
 	{
 		Helper.Log("BluetoothPrinter getSocketStream", "尝试连接蓝牙设备");
 		mSocket = m_Device.createRfcommSocketToServiceRecord(SerialPortServiceClass_UUID);
@@ -131,6 +192,16 @@ public class BluetoothPrinter implements IPrinter {
 		OutputStream os = mSocket.getOutputStream();
 		Helper.Log("BluetoothPrinter getSocketStream", "成功连接");
 		return os;
+	}
+	
+	/**
+	 * 获取InputStream(继承者需要重载)
+	 * @return
+	 * @throws Exception
+	 */
+	InputStream getSocketInputStream() throws Exception
+	{
+		return mSocket.getInputStream();
 	}
 	
 	/**
@@ -156,7 +227,7 @@ public class BluetoothPrinter implements IPrinter {
 		while (true) {
 			try {
 				//打开socket，获取OutputStream
-				OutputStream printStream = getSocketStream();
+				OutputStream printStream = getSocketOutputStream();
 
 				//为了防止数据过长，分行打印
 				int position = 0;
@@ -211,4 +282,6 @@ public class BluetoothPrinter implements IPrinter {
 			}
 		}
 	}
+	
+	
 }

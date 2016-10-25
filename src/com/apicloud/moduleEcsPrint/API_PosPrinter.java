@@ -258,6 +258,96 @@ public class API_PosPrinter extends UZModule {
 	}
 	
 	/**
+	 * 打印二维码
+	 * @param moduleContext {printerAddr: '打印机Mac地址或IP地址',pin:'蓝牙配对码' , base64:'base64内容' }
+	 */
+	public void jsmethod_printImage(final UZModuleContext moduleContext){
+		// 必须在另一个线程执行，因为socket在当前线程创建不了
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					String base64 = moduleContext.optString("base64");
+					String printerAddr = moduleContext.optString("printerAddr");
+					String pin = moduleContext.optString("pin" , "0000");
+
+					IPrinter ipPrinter = null;
+					if (printerAddr.contains(":")) {
+						ipPrinter = new BluetoothPrinter(printerAddr,pin);
+					} else if (printerAddr.contains(".")) {
+						ipPrinter = new NetPrinter(printerAddr);
+					} else {
+						throw new Exception("打印机地址错误");
+					}
+					ipPrinter.printImage(base64);
+				} catch (Exception e) {
+					Helper.alert(m_Context, handler, "Error", e.getMessage());
+				}
+			}
+		}).start();
+	}
+	
+	/**
+	 * 获取打印机状态
+	 * @param moduleContext {printerAddr: '打印机Mac地址或IP地址',pin:'蓝牙配对码' }
+	 */
+	public void jsmethod_getStatus(final UZModuleContext moduleContext){
+		// 必须在另一个线程执行，因为socket在当前线程创建不了
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					String printerAddr = moduleContext.optString("printerAddr");
+					String pin = moduleContext.optString("pin" , "0000");
+
+					IPrinter ipPrinter = null;
+					if (printerAddr.contains(":")) {
+						ipPrinter = new BluetoothPrinter(printerAddr,pin);
+					} else if (printerAddr.contains(".")) {
+						ipPrinter = new NetPrinter(printerAddr);
+					} else {
+						throw new Exception("打印机地址错误");
+					}
+					JSONObject status = ipPrinter.getStatus();
+					moduleContext.success(status, true);
+				} catch (Exception e) {
+					Helper.alert(m_Context, handler, "Error", e.getMessage());
+				}
+			}
+		}).start();
+	}
+	
+	// 传入 JSON 格式
+	// { content: '打印内容', copyNum '可选，打印次数' }
+	public void jsmethod_printOnBondedPrinter(final UZModuleContext moduleContext) {
+		
+		// 必须在另一个线程执行，因为socket在当前线程创建不了
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					String content = moduleContext.optString("content", "null");
+					int copyNum = moduleContext.optInt("copyNum", 1);
+
+					Comp_BluetoothDeviceManager deviceManager = new Comp_BluetoothDeviceManager();
+					List<BTDevice> bondedbtDevices = deviceManager
+							.GetBondedDevices();
+					for (BTDevice device : bondedbtDevices) {
+						IPrinter printer = createPrinter(device.address, "0000");
+						printer.print(content, copyNum);
+					}
+				} catch (Exception e) {
+					Helper.alert(m_Context, handler, "Error", e.getMessage());
+				}
+			}
+		}).start();
+		
+	}
+	
+	/**
 	 * 创建打印机实例
 	 * @param address 打印机地址
 	 * @param pin 配对编码，如蓝牙的配对码，如果为null，则默认0000

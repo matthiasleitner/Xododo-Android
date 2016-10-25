@@ -19,6 +19,7 @@
     		font-size:15px;
     	}
     </style>
+
 	<script type="text/javascript">
 	    var myModule = null;
 		var uzmoduledemo = null;
@@ -26,12 +27,13 @@
 		apiready = function(){
 			myModule = api.require('posPrinter');
 			myModule.startLog();
+			
 	    }
 	    
 		function printTest(){
 			var myModule = api.require('posPrinter');
 			
-           var content = "<L>小恒水饺长阳华冠</L><L>菜品营业销售汇总日报表</L><L>小恒水饺长阳华冠--菜品营业销售汇总日报表</L><L>小恒水饺长阳华冠--菜品营业销售汇总日报表</L><BR>***********<BR>***************<BR>***************<BR>*******<BR>统计日期：2016-10-14<CUT>";
+           var content = "<L>小恒水饺长阳华冠</L><BR><QR>http://www.xododo.com</QR><BR><L>菜品营业销售汇总日报表</L><L>小恒水饺长阳华冠--菜品营业销售汇总日报表</L><L>小恒水饺长阳华冠--菜品营业销售汇总日报表</L><BR>***********<BR>***************<BR>***************<BR>*******<BR>统计日期：2016-10-14<CUT>";
 //98:D3:31:20:23:4A 00:18:E4:0C:6B:1E
             var param = { "taskList": [{ "printerAddr": "192.168.3.243", "content": content, copyNum: 1 }] };
 			myModule.printOnSpecifiedPrinters(param);
@@ -43,6 +45,23 @@
 			myModule.printQRCode(param);
 		}
 		
+		//打印图片
+		function printImage(){
+			var myModule = api.require('posPrinter');
+            var param = {printerAddr: '192.168.3.243' , pin:'0000', 
+            base64:'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' 
+            };
+			myModule.printImage(param);
+		}
+		//获取打印机状态
+		function getPrinterStatus(){
+			var myModule = api.require('posPrinter');
+            var param = {printerAddr: '192.168.3.243' , pin:'0000'};
+			myModule.getStatus(param , function(status , err)
+			{
+				alert("钱箱状态："+status.CashBoxStatus + ",联机状态：" + status.ConnectStatus + ",纸张状态：" + status.PaperStatus);
+			});
+		}
 		function findBluetooth()
 		{
 		
@@ -59,6 +78,8 @@
 		
 		function startScanner()
 		{
+			var module = api.require('BluetoothCodeScanner');
+
 			var param = {addr : "5C:B6:CC:02:C9:33"};//扫描枪地址定义
 			var resultCallback = function(code, err){
 				if(err)
@@ -74,7 +95,7 @@
 				}
 			}
 			//注册扫描枪回调
-			myModule.setScannerCallback(param,resultCallback);
+			module.setScannerCallback(param,resultCallback);
 		}
 		
 		function startActivity(){
@@ -179,6 +200,7 @@
 <body>
     <div id="wrap">
         <div id="main">
+        <div id="div1"></div>
         	<br>
 			<div class='itemtitle'>1閵嗕礁鑴婇崙鍝勵嚠鐠囨繃顢�</div>
 				<div class="clickbtn" tapmode="active" onclick="printTest()" >打印</div>   
@@ -186,6 +208,8 @@
 			<div class='itemtitle'>2閵嗕礁鎯庨崝藡ctivity</div>
 				<div class="clickbtn" tapmode="active" onclick="findBluetooth()" >find bluetooth</div>
 				<div class="clickbtn" tapmode="active" onclick="startScanner()" >开启蓝牙扫描枪</div>
+				<div class="clickbtn" tapmode="active" onclick="printImage()" >打印图片</div>
+				<div  class="clickbtn" tapmode="active" onclick="getPrinterStatus()">获取打印机状态</div>
 				<div id="divScannerResult"></div>
 				<div style="font-size:0.8em;">acticity鏉╂柨娲栭崐锟�:</div>
             	<div id="activity_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br>
@@ -216,5 +240,13 @@
 			<br>
 		</div>
 	</div>
+	
+	    <script lang="ja">
+        var worker = new Worker("script/thread.js");
+        worker.onmessage = function(event)
+        {
+            document.getElementById("div1").innerHTML = event.data;
+        }
+    </script>
 </body>
 </html>

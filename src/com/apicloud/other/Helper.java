@@ -9,7 +9,10 @@ import com.apicloud.loggers.TextFileLog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
+import android.util.Base64;
 
 public class Helper {
 	static ILog logger;
@@ -65,6 +68,26 @@ public class Helper {
 		builder.setMessage(msg);
 		builder.setPositiveButton("确定", null);
 		builder.show();
+	}
+	
+	/**
+	 * base64字符串转bitmap
+	 * @param string
+	 * @return
+	 */
+	public static Bitmap string2Bitmap(String string) {
+		// 将字符串转换成Bitmap类型
+		Bitmap bitmap = null;
+		try {
+			byte[] bitmapArray;
+			bitmapArray = Base64.decode(string, Base64.DEFAULT);
+			bitmap = BitmapFactory.decodeByteArray(bitmapArray, 0,
+					bitmapArray.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return bitmap;
 	}
 
 	/**
