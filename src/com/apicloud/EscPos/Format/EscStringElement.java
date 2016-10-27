@@ -27,11 +27,11 @@ public class EscStringElement  {
 		{
 			 Commands = new Hashtable<String, byte[]>();
 			CommandBuilder builder = new CommandBuilder();
-			Commands.put("B", builder.bold(true));
-			Commands.put("C", builder.textAlign(1));
-			Commands.put("A", builder.fontSize(2));
-			Commands.put("L", builder.fontSizeSetHeight(1));
-			Commands.put("T", builder.fontSize(4));
+			Commands.put("B", builder.bold(true));//加粗
+			Commands.put("C", builder.textAlign(1));//居中
+			Commands.put("A", builder.fontSize(2));//17号字体
+			Commands.put("L", builder.fontSizeSetHeight(1));//1号字体
+			Commands.put("T", builder.fontSize(4));//51号字体
 		}
 	}
 	
